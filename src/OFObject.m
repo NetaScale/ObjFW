@@ -15,12 +15,16 @@
 
 #include "config.h"
 
+#ifndef _KERNEL
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "unistd_wrapper.h"
 
 #include <assert.h>
+#else
+#include "kern/klibc.h"
+#endif
 
 #ifdef OF_APPLE_RUNTIME
 # include <dlfcn.h>

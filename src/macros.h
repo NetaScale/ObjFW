@@ -29,11 +29,15 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#ifndef _KERNEL
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include <sys/time.h>
+#else
+#include "kern/klibc.h"
+#endif
 
 #include "platform.h"
 

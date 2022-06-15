@@ -13,7 +13,9 @@
  * file.
  */
 
+#ifndef _KERNEL
 #include <stdlib.h>
+#endif
 
 #import "macros.h"
 

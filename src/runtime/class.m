@@ -20,6 +20,10 @@
 #include <string.h>
 #include <limits.h>
 
+#ifdef KERNEL
+#include "kern/klibc.h"
+#endif
+
 #import "ObjFWRT.h"
 #import "private.h"
 

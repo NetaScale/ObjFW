@@ -16,10 +16,14 @@
 #include "config.h"
 
 #include <limits.h>
+#ifndef _KERNEL
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#else
+#include "kern/klibc.h"
+#endif
 
 #import "ObjFWRT.h"
 #import "private.h"

@@ -31,6 +31,7 @@
 
 #include <stdarg.h>
 #include <stdint.h>
+#include <limits.h>
 #ifdef OF_HAVE_INTTYPES_H
 # include <inttypes.h>
 #endif

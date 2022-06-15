@@ -15,9 +15,13 @@
 
 #include "config.h"
 
+#ifndef _KERNEL
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#else
+#include "kern/klibc.h"
+#endif
 
 #import "ObjFWRT.h"
 #import "private.h"
