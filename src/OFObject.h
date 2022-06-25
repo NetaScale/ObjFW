@@ -606,6 +606,11 @@ OF_ROOT_CLASS
 @property (readonly, nonatomic) OFString *className;
 
 /**
+ * @brief The name of the object's class.
+ */
+@property (readonly, nonatomic) const char *classNameCString;
+
+/**
  * @brief A description for the object.
  *
  * This is used when the object is used in a format string and for debugging
@@ -677,6 +682,8 @@ OF_ROOT_CLASS
  * @return The name of the class as a string
  */
 + (OFString *)className;
+
++ (const char *)classNameCString;
 
 /**
  * @brief Returns a boolean whether the class is a subclass of the specified
@@ -864,6 +871,7 @@ OF_ROOT_CLASS
  */
 - (void)dealloc;
 
+#ifndef _KERNEL
 /**
  * @brief Performs the specified selector after the specified delay.
  *
@@ -941,6 +949,7 @@ OF_ROOT_CLASS
 	     withObject: (nullable id)object3
 	     withObject: (nullable id)object4
 	     afterDelay: (OFTimeInterval)delay;
+#endif
 
 # ifdef OF_HAVE_THREADS
 /**

@@ -8,9 +8,9 @@ kobjcrt_srcs = [ 'arc.m', 'autorelease.m', 'category.m',
 kobjcrt = static_library('kobjcrt', kobjcrt_srcs,
 	c_args: [ kern_c_args ],
 	objc_args: [ kern_objc_args, '-DOBJC_COMPILING_RUNTIME',
-	    '-DOF_COMPILING_OBJFW', '-D_KERNEL' ],
+	    '-DOF_COMPILING_OBJFW' ],
 	link_args: [ '-lgcc' ],
 	include_directories : [ libc_incs, vxkern_incs, '../' ] )
 
-libkobjcrt_dep = declare_dependency(link_with : [ kobjcrt ],
+kobjcrt_dep = declare_dependency(link_with : [ kobjcrt ],
 	include_directories : [ '.' ] )

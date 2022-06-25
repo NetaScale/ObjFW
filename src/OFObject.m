@@ -107,12 +107,18 @@ OFAllocMemory(size_t count, size_t size)
 	if OF_UNLIKELY (count == 0 || size == 0)
 		return NULL;
 
+#ifndef _KERNEL
 	if OF_UNLIKELY (count > SIZE_MAX / size)
 		@throw [OFOutOfRangeException exception];
+#endif
 
 	if OF_UNLIKELY ((pointer = malloc(count * size)) == NULL)
+#ifndef _KERNEL
 		@throw [OFOutOfMemoryException
 		    exceptionWithRequestedSize: size];
+#else
+		fatal("OFAllocMemory got zero\n");
+#endif
 
 	return pointer;
 }
@@ -126,12 +132,18 @@ OFAllocZeroedMemory(size_t count, size_t size)
 		return NULL;
 
 	/* Not all calloc implementations check for overflow. */
+#ifndef _KERNEL
 	if OF_UNLIKELY (count > SIZE_MAX / size)
 		@throw [OFOutOfRangeException exception];
+#endif
 
 	if OF_UNLIKELY ((pointer = calloc(count, size)) == NULL)
+#ifndef _KERNEL
 		@throw [OFOutOfMemoryException
 		    exceptionWithRequestedSize: size];
+#else
+		fatal("OFAllocMemory got zero\n");
+#endif
 
 	return pointer;
 }
@@ -144,12 +156,18 @@ OFResizeMemory(void *pointer, size_t count, size_t size)
 		return NULL;
 	}
 
+#ifndef _KERNEL
 	if OF_UNLIKELY (count > SIZE_MAX / size)
 		@throw [OFOutOfRangeException exception];
+#endif
 
 	if OF_UNLIKELY ((pointer = realloc(pointer, count * size)) == NULL)
+#ifndef _KERNEL
 		@throw [OFOutOfMemoryException
 		    exceptionWithRequestedSize: size];
+#else
+		fatal("OFAllocMemory got zero\n");
+#endif
 
 	return pointer;
 }
@@ -160,7 +178,7 @@ OFFreeMemory(void *pointer)
 	free(pointer);
 }
 
-#if !defined(HAVE_ARC4RANDOM) && !defined(HAVE_GETRANDOM)
+#if !defined(HAVE_ARC4RANDOM) && !defined(HAVE_GETRANDOM) && !defined(_KERNEL)
 static void
 initRandom(void)
 {
@@ -179,7 +197,9 @@ initRandom(void)
 uint16_t
 OFRandom16(void)
 {
-#if defined(HAVE_ARC4RANDOM)
+#if defined(_KERNEL)
+	return 0x1234;
+#elif defined(HAVE_ARC4RANDOM)
 	return arc4random();
 #elif defined(HAVE_GETRANDOM)
 	uint16_t buffer;
@@ -255,6 +275,7 @@ typeEncodingForSelector(Class class, SEL selector)
 static void
 uncaughtExceptionHandler(id exception)
 {
+#ifndef _KERNEL
 	OFString *description = [exception description];
 	OFArray *backtrace = nil;
 	OFStringEncoding encoding = [OFLocale encoding];
@@ -272,13 +293,20 @@ uncaughtExceptionHandler(id exception)
 	}
 
 	abort();
+#else
+	fatal("Runtime error: Unhandled exception\n");
+#endif
 }
 #endif
 
 static void
 enumerationMutationHandler(id object)
 {
+#ifndef _KERNEL
 	@throw [OFEnumerationMutationException exceptionWithObject: object];
+#else
+	fatal("EnumerationMutationHandler\n");
+#endif
 }
 
 void OF_NO_RETURN_FUNC
@@ -318,8 +346,12 @@ OFAllocObject(Class class, size_t extraSize, size_t extraAlignment,
 	    extraAlignment + extraSize);
 
 	if OF_UNLIKELY (instance == nil) {
+#ifndef _KERNEL
 		allocFailedException.isa = [OFAllocFailedException class];
 		@throw (id)&allocFailedException;
+#else
+		fatal("OFAllocObject failed\n");
+#endif
 	}
 
 	((struct PreIvars *)instance)->retainCount = 1;
@@ -337,8 +369,12 @@ OFAllocObject(Class class, size_t extraSize, size_t extraAlignment,
 
 	if (!objc_constructInstance(class, instance)) {
 		free((char *)instance - PRE_IVARS_ALIGN);
+#ifndef _KERNEL
 		@throw [OFInitializationFailedException
 		    exceptionWithClass: class];
+#else
+		fatal("Initialisation failed\n");
+#endif
 	}
 
 	if OF_UNLIKELY (extra != NULL)
@@ -350,21 +386,27 @@ OFAllocObject(Class class, size_t extraSize, size_t extraAlignment,
 const char *
 _NSPrintForDebugger(id object)
 {
+#ifndef _KERNEL
 	return [[object description] cStringWithEncoding: [OFLocale encoding]];
+#else
+	return "???";
+#endif
 }
 
 /* References for static linking */
 void
 _references_to_categories_of_OFObject(void)
 {
+#ifndef _KERNEL
 	_OFObject_KeyValueCoding_reference = 1;
 	_OFObject_Serialization_reference = 1;
+#endif
 }
 
 @implementation OFObject
 + (void)load
 {
-#if !defined(OF_APPLE_RUNTIME) || defined(__OBJC2__)
+#if (!defined(OF_APPLE_RUNTIME) || defined(__OBJC2__)) && !defined(_KERNEL)
 	objc_setUncaughtExceptionHandler(uncaughtExceptionHandler);
 #endif
 
@@ -422,8 +464,17 @@ _references_to_categories_of_OFObject(void)
 
 + (OFString *)className
 {
+#ifndef _KERNEL
 	return [OFString stringWithCString: class_getName(self)
 				  encoding: OFStringEncodingASCII];
+#else
+	return nil;
+#endif
+}
+
++ (const char *)classNameCString
+{
+	return class_getName(self);
 }
 
 + (bool)isSubclassOfClass: (Class)class
@@ -463,12 +514,16 @@ _references_to_categories_of_OFObject(void)
 
 + (OFMethodSignature *)instanceMethodSignatureForSelector: (SEL)selector
 {
+#ifndef _KERNEL
 	const char *typeEncoding = typeEncodingForSelector(self, selector);
 
 	if (typeEncoding == NULL)
 		return nil;
 
 	return [OFMethodSignature signatureWithObjCTypes: typeEncoding];
+#else
+	return nil;
+#endif
 }
 
 + (OFString *)description
@@ -480,8 +535,10 @@ _references_to_categories_of_OFObject(void)
 {
 	IMP method = [class methodForSelector: selector];
 
+#ifndef _KERNEL
 	if (method == NULL)
 		@throw [OFInvalidArgumentException exception];
+#endif
 
 	return class_replaceMethod(object_getClass(self), selector, method,
 	    typeEncodingForSelector(object_getClass(class), selector));
@@ -491,8 +548,10 @@ _references_to_categories_of_OFObject(void)
 {
 	IMP method = [class instanceMethodForSelector: selector];
 
+#ifndef _KERNEL
 	if (method == NULL)
 		@throw [OFInvalidArgumentException exception];
+#endif
 
 	return class_replaceMethod(self, selector, method,
 	    typeEncodingForSelector(class, selector));
@@ -508,7 +567,11 @@ _references_to_categories_of_OFObject(void)
 		return;
 
 	methodList = class_copyMethodList(object_getClass(class), &count);
-	@try {
+
+#ifndef _KERNEL
+	@try
+#endif
+	{
 		for (unsigned int i = 0; i < count; i++) {
 			SEL selector = method_getName(methodList[i]);
 
@@ -523,12 +586,19 @@ _references_to_categories_of_OFObject(void)
 			[self replaceClassMethod: selector
 			     withMethodFromClass: class];
 		}
-	} @finally {
+	}
+#ifndef _KERNEL
+	@finally
+#endif
+	{
 		free(methodList);
 	}
 
 	methodList = class_copyMethodList(class, &count);
-	@try {
+#ifndef _KERNEL
+	@try
+#endif
+	{
 		for (unsigned int i = 0; i < count; i++) {
 			SEL selector = method_getName(methodList[i]);
 
@@ -543,7 +613,11 @@ _references_to_categories_of_OFObject(void)
 			[self replaceInstanceMethod: selector
 				withMethodFromClass: class];
 		}
-	} @finally {
+	}
+#ifndef _KERNEL
+	@finally
+#endif
+	{
 		free(methodList);
 	}
 
@@ -577,8 +651,17 @@ _references_to_categories_of_OFObject(void)
 
 - (OFString *)className
 {
+#ifndef _KERNEL
 	return [OFString stringWithCString: object_getClassName(self)
 				  encoding: OFStringEncodingASCII];
+#else
+	return nil;
+#endif
+}
+
+- (const char *)classNameCString
+{
+	return object_getClassName(self);
 }
 
 - (bool)isKindOfClass: (Class)class
@@ -681,6 +764,7 @@ _references_to_categories_of_OFObject(void)
 	return imp(self, selector, object1, object2, object3, object4);
 }
 
+#ifndef _KERNEL
 - (void)performSelector: (SEL)selector afterDelay: (OFTimeInterval)delay
 {
 	void *pool = objc_autoreleasePoolPush();
@@ -764,6 +848,7 @@ _references_to_categories_of_OFObject(void)
 
 	objc_autoreleasePoolPop(pool);
 }
+#endif
 
 #ifdef OF_HAVE_THREADS
 - (void)performSelector: (SEL)selector
@@ -1064,6 +1149,7 @@ _references_to_categories_of_OFObject(void)
 
 - (OFMethodSignature *)methodSignatureForSelector: (SEL)selector
 {
+#ifndef _KERNEL
 	const char *typeEncoding =
 	    typeEncodingForSelector(object_getClass(self), selector);
 
@@ -1071,6 +1157,9 @@ _references_to_categories_of_OFObject(void)
 		return nil;
 
 	return [OFMethodSignature signatureWithObjCTypes: typeEncoding];
+#else
+	return nil;
+#endif
 }
 
 - (bool)isEqual: (id)object
@@ -1098,8 +1187,11 @@ _references_to_categories_of_OFObject(void)
 - (OFString *)description
 {
 	/* Classes containing data should reimplement this! */
-
+#ifndef _KERNEL
 	return [OFString stringWithFormat: @"<%@>", self.className];
+#else
+	return nil;
+#endif
 }
 
 - (id)forwardingTargetForSelector: (SEL)selector
@@ -1109,8 +1201,12 @@ _references_to_categories_of_OFObject(void)
 
 - (void)doesNotRecognizeSelector: (SEL)selector
 {
+#ifndef _KERNEL
 	@throw [OFNotImplementedException exceptionWithSelector: selector
 							 object: self];
+#else
+	fatal("doesNotRecognizeSelector");
+#endif
 }
 
 - (instancetype)retain
