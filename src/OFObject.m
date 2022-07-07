@@ -23,7 +23,7 @@
 
 #include <assert.h>
 #else
-#include "kern/klibc.h"
+#include <libkern/klib_libc.h>
 #endif
 
 #ifdef OF_APPLE_RUNTIME

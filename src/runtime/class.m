@@ -21,7 +21,7 @@
 #include <limits.h>
 
 #ifdef KERNEL
-#include "kern/klibc.h"
+#include <libkern/klib_libc.h>
 #endif
 
 #import "ObjFWRT.h"

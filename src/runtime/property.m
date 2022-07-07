@@ -18,7 +18,7 @@
 #ifndef _KERNEL
 #include <string.h>
 #else
-#include "kern/klibc.h"
+#include <libkern/klib_libc.h>
 #endif
 
 

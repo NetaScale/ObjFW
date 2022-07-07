@@ -19,7 +19,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #else
-#include "kern/klibc.h"
+#include <libkern/klib_libc.h>
 #endif
 
 #import "ObjFWRT.h"

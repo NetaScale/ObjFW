@@ -22,7 +22,7 @@
 #include <stdlib.h>
 #include <string.h>
 #else
-#include "kern/klibc.h"
+#include <libkern/klib_libc.h>
 #endif
 
 #import "ObjFWRT.h"

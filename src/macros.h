@@ -36,7 +36,7 @@
 
 #include <sys/time.h>
 #else
-#include "kern/klibc.h"
+#include <libkern/klib_libc.h>
 #endif
 
 #include "platform.h"
