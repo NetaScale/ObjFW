@@ -6,11 +6,11 @@ kobjcrt_srcs = [ 'arc.m', 'autorelease.m', 'category.m',
 	  'lookup-asm/lookup-asm-x86_64-elf.S' ]
 
 kobjcrt = static_library('kobjcrt', kobjcrt_srcs,
-	c_args: [ kernel_c_args ],
-	objc_args: [ kernel_objc_args, '-DOBJC_COMPILING_RUNTIME',
-	    '-DOF_COMPILING_OBJFW' ],
+	c_args: [ kern_c_args ],
+	objc_args: [ kern_objc_args, '-DOBJC_COMPILING_RUNTIME',
+	    '-DOF_COMPILING_OBJFW', '-std=gnu11'  ],
 	link_args: [ '-lgcc' ],
-	include_directories : [ libc_includes, kernel_includes, '../' ] )
+	include_directories : [ kern_incs, '../' ] )
 
 kobjcrt_dep = declare_dependency(link_with : [ kobjcrt ],
 	include_directories : [ '.' ] )
